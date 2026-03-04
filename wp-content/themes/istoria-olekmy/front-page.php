@@ -3,13 +3,19 @@
  * Template Name: Главная страница
  */
 
-get_header(); ?>
+get_header(); ?
 
 <!-- Hero Section -->
-<section class="hero-section" style="background-image: url('<?php echo get_template_directory_uri(); ?>/assets/images/hero-bg.jpg');">
+<?php
+$hero_image = get_template_directory() . '/assets/images/hero-bg.jpg';
+$hero_style = file_exists($hero_image) 
+    ? 'background-image: url(' . get_template_directory_uri() . '/assets/images/hero-bg.jpg);' 
+    : 'background-color: #3d2914;';
+?>
+<section class="hero-section" style="<?php echo esc_attr($hero_style); ?>">
     <div class="hero-content">
-        <h1>История Олёкминского района</h1>
-        <p>Цифровой архив событий, фотографий и воспоминаний. Сохраняем историю для будущих поколений.</p>
+        <h1><?php echo esc_html('История Олёкминского района'); ?></h1>
+        <p><?php echo esc_html('Цифровой архив событий, фотографий и воспоминаний. Сохраняем историю для будущих поколений.'); ?></p>
     </div>
 </section>
 
@@ -18,78 +24,133 @@ get_header(); ?>
     <div class="this-day-section">
         <div class="this-day-title">
             <span class="icon">📅</span>
-            <h2>Сегодня в истории: <?php echo date('j ') . russian_month(date('n')); ?></h2>
+            <h2><?php echo esc_html('Сегодня в истории: ' . date('j ') . russian_month(date('n'))); ?></h2>
         </div>
         <div id="this-day-events" class="this-day-list">
-            <p>Загрузка событий...</p>
+            <p><?php echo esc_html('Загрузка событий...'); ?></p>
+        </div>
+        <div class="text-center" style="margin-top: 1rem;">
+            <a href="<?php echo esc_url(home_url('/this-day')); ?>" class="button">Все события дня →</a>
         </div>
     </div>
 </section>
 
 <!-- Photo Archive Preview -->
 <section class="content-section">
-    <h2 class="section-title">Фото прошлых лет</h2>
-    <div id="random-photo" class="photo-featured">
-        <!-- Photo loaded via JS -->
-    </div>
+    <h2 class="section-title"><?php echo esc_html('Фото прошлых лет'); ?></h2>
+    
+    <?php
+    $random_photo = new WP_Query([
+        'post_type' => 'photo',
+        'posts_per_page' => 1,
+        'orderby' => 'rand',
+    ]);
+    
+    if ($random_photo->have_posts()) : 
+        while ($random_photo->have_posts()) : $random_photo->the_post();
+    ?>
+        <div class="photo-featured">
+            <?php if (has_post_thumbnail()) : ?
+                <a href="<?php the_permalink(); ?>">
+                    <?php the_post_thumbnail('large', ['style' => 'max-width: 100%; height: auto; border-radius: 8px;']); ?>
+                </a>
+            <?php endif; ?>
+            
+            <h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+            
+            <?php 
+            $year = function_exists('get_field') ? get_field('year') : '';
+            if ($year) : 
+            ?>
+                <p>📆 <?php echo esc_html($year); ?></p>
+            <?php endif; ?>
+        </div>
+        
+    <?php 
+        endwhile;
+        wp_reset_postdata();
+    else : 
+    ?>
+        <p><?php echo esc_html('Фотографии скоро появятся.'); ?></p>
+        
+    <?php endif; ?>
     
     <div class="text-center">
-        <a href="/foto" class="button">Все фотографии →</a>
+        <a href="<?php echo esc_url(get_post_type_archive_link('photo')); ?>" class="button"><?php echo esc_html('Все фотографии →'); ?></a>
     </div>
 </section>
 
 <!-- Newspaper Archive -->
 <section class="content-section">
-    <h2 class="section-title">Архив газет</h2>
-    <div id="latest-issues" class="cards-grid">
-        <!-- Issues loaded via JS -->
-    </div>
-</section>
-
-<!-- Random Exhibit -->
-<section class="content-section">
-    <h2 class="section-title">Случайный экспонат</h2>
-    <div id="random-exhibit" class="exhibit-featured">
-        <!-- Exhibit loaded via JS -->
-    </div>
-</section>
-
-<!-- Latest Additions -->
-<section class="content-section">
-    <h2 class="section-title">Последние добавления</h2>
+    <h2 class="section-title"><?php echo esc_html('Архив газет'); ?></h2>
     
-    <div class="latest-grid">
-        <?php
-        $latest = new WP_Query([
-            'post_type' => ['event', 'photo', 'issue'],
-            'posts_per_page' => 6,
-        ]);
-        
-        while ($latest->have_posts()) : $latest->the_post();
-        ?>
-            <article class="card">
-                <?php if (has_post_thumbnail()) : ?
-                    <?php the_post_thumbnail('medium', ['class' => 'card-image']); ?>
-                <?php endif; ?>
+    <?php
+    $latest_issues = new WP_Query([
+        'post_type' => 'issue',
+        'posts_per_page' => 6,
+        'orderby' => 'date',
+        'order' => 'DESC',
+    ]);
+    
+    if ($latest_issues->have_posts()) : 
+    ?>
+        <div class="cards-grid">
+            
+            <?php while ($latest_issues->have_posts()) : $latest_issues->the_post(); ?>
                 
-                <div class="card-content">
-                    <div class="card-meta"><?php echo get_post_type_object(get_post_type())->label; ?></div>
-                    <h3 class="card-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-                    <time datetime="<?php echo get_the_date('Y-m-d'); ?>"><?php echo get_the_date(); ?></time>
-                </div>
-            </article>
-        <?php endwhile; wp_reset_postdata(); ?>
+                <article class="card">
+                    <?php if (has_post_thumbnail()) : ?
+                        <?php the_post_thumbnail('medium', ['class' => 'card-image']); ?>
+                    <?php endif; ?>
+                    
+                    <div class="card-content">
+                        <div class="card-meta">
+                            <?php 
+                            $issue_date = function_exists('get_field') ? get_field('issue_date') : '';
+                            if ($issue_date) : 
+                            ?>
+                                <span>📅 <?php echo esc_html(date('d.m.Y', strtotime($issue_date))); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <h3 class="card-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+                        
+                        <?php 
+                        $pdf = function_exists('get_field') ? get_field('pdf_file') : '';
+                        if ($pdf) : 
+                        ?>
+                            <a href="<?php echo esc_url($pdf); ?>" class="button" target="_blank">📄 PDF</a>
+                        <?php endif; ?>
+                    </div>
+                </article>
+                
+            <?php endwhile; wp_reset_postdata(); ?>
+        </div>
+        
+    <?php else : ?>
+        <p><?php echo esc_html('Выпуски газет скоро появятся.'); ?></p>
+        
+    <?php endif; ?>
+    
+    <div class="text-center" style="margin-top: 2rem;">
+        <a href="<?php echo esc_url(get_post_type_archive_link('issue')); ?>" class="button"><?php echo esc_html('Весь архив газет →'); ?></a>
     </div>
 </section>
 
 <!-- Search Section -->
 <section class="content-section">
-    <div class="search-section" style="text-align: center; padding: var(--spacing-lg); background: var(--color-beige); border-radius: 8px;">
-        <h2>Поиск по архиву</h2>
+    <div class="search-section" style="text-align: center; padding: 3rem 2rem; background: #e8dcc8; border-radius: 8px;">
+        
+        <h2><?php echo esc_html('Поиск по архиву'); ?></h2>
         
         <form role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
-            <input type="search" name="s" placeholder="Введите запрос..." style="padding: 12px; width: 300px; max-width: 100%; border: 1px solid var(--color-brown); border-radius: 4px;">
-            <button type="submit" class="button" style="margin-left: 10px;">Поиск</button>
+            <input 
+                type="search" 
+                name="s" 
+                placeholder="<?php echo esc_attr('Введите запрос...'); ?>" 
+                style="padding: 12px; width: 300px; max-width: 100%; border: 1px solid #3d2914; border-radius: 4px; font-size: 16px;"
+            >
+            <button type="submit" class="button" style="margin-left: 10px; padding: 12px 24px;"><?php echo esc_html('Поиск'); ?></button>
         </form>
     </div>
 </section>

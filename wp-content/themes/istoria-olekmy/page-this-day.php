@@ -8,8 +8,8 @@ get_header(); ?>
 <div class="content-section">
     
     <header class="page-header">
-        <h1>Этот день в истории Олёкминска</h1>
-        <p class="this-day-date"><?php echo date('j ') . russian_month(date('n')); ?></p>
+        <h1><?php echo esc_html('Этот день в истории Олёкминска'); ?></h1>
+        <p class="this-day-date"><?php echo esc_html(date('j ') . russian_month(date('n'))); ?></p>
     </header>
     
     <?php
@@ -18,62 +18,106 @@ get_header(); ?>
     $day = $today['mday'];
     $month = $today['mon'];
     
+    // Build meta query for events with event_date matching today
+    $meta_query = [
+        'relation' => 'AND',
+        [
+            'key' => 'event_date',
+            'compare' => 'EXISTS',
+        ],
+        [
+            'key' => 'event_date',
+            'value' => '',
+            'compare' => '!=',
+        ],
+    ];
+    
     $events = new WP_Query([
         'post_type' => 'event',
-        'posts_per_page' => -1,
-        'meta_query' => [
-            [
-                'key' => 'event_date',
-                'value' => ['[0-9]{4}-' . sprintf('%02d', $month) . '-' . sprintf('%02d', $day)],
-                'compare' => 'REGEXP',
-            ],
-        ],
+        'posts_per_page' => 10,
+        'meta_query' => $meta_query,
         'orderby' => 'meta_value',
         'meta_key' => 'event_date',
         'order' => 'ASC',
     ]);
+    
+    // Filter events manually by day/month
+    $filtered_events = [];
+    if ($events->have_posts()) {
+        while ($events->have_posts()) {
+            $events->the_post();
+            $event_date = get_field('event_date');
+            if ($event_date) {
+                $event_timestamp = strtotime($event_date);
+                if ($event_timestamp) {
+                    $event_day = date('j', $event_timestamp);
+                    $event_month = date('n', $event_timestamp);
+                    if ($event_day == $day && $event_month == $month) {
+                        $filtered_events[] = [
+                            'post' => get_post(),
+                            'year' => date('Y', $event_timestamp),
+                        ];
+                    }
+                }
+            }
+        }
+        wp_reset_postdata();
+    }
     ?>
     
     
-    <?php if ($events->have_posts()) : ?>
+    <?php if (!empty($filtered_events)) : ?>
         
         <div class="this-day-events">
             
-            <?php while ($events->have_posts()) : $events->the_post(); ?>
+            <?php foreach ($filtered_events as $event_data) : 
+                $post = $event_data['post'];
+                setup_postdata($post);
+            ?>
                 
                 <article class="this-day-event">
                     <div class="event-year-badge">
-                        <?php 
-                        $event_date = get_field('event_date');
-                        echo $event_date ? date('Y', strtotime($event_date)) : get_field('year');
-                        ?>
+                        <?php echo esc_html($event_data['year']); ?>
                     </div>
                     
                     <div class="event-content">
-                        <h2><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
+                        <h2><a href="<?php echo esc_url(get_permalink($post)); ?>"><?php echo esc_html(get_the_title($post)); ?></a></h2>
                         
-                        <?php if (get_field('place')) : ?>
-                            <p class="event-place">📍 <?php the_field('place'); ?></p>
+                        <?php 
+                        $place = function_exists('get_field') ? get_field('place', $post->ID) : '';
+                        if ($place) : 
+                        ?>
+                            <p class="event-place">📍 <?php echo esc_html($place); ?></p>
                         <?php endif; ?>
                         
-                        <?php if (get_field('description')) : ?>
-                            <p><?php echo wp_trim_words(get_field('description'), 40); ?></p>
+                        <?php 
+                        $description = function_exists('get_field') ? get_field('description', $post->ID) : '';
+                        if ($description) : 
+                        ?>
+                            <p><?php echo esc_html(wp_trim_words($description, 40)); ?></p>
                         <?php endif; ?>
                     </div>
                 </article>
                 
-            <?php endwhile; wp_reset_postdata(); ?>
+            <?php endforeach; wp_reset_postdata(); ?>
         </div>
+        
+        <?php if (count($filtered_events) >= 10) : ?>
+            <div class="show-more">
+                <a href="<?php echo esc_url(get_post_type_archive_link('event')); ?>" class="button">
+                    Показать все события →
+                </a>
+            </div>
+        <?php endif; ?>
         
     <?php else : ?>
         
         <div class="no-events">
             <p>На сегодняшний день событий в архиве не найдено.</p>
-            <p><a href="/sobytiya/" class="button">Смотреть все события →</a></p>
+            <p><a href="<?php echo esc_url(get_post_type_archive_link('event')); ?>" class="button">Смотреть все события →</a></p>
         </div>
         
-    <?php endif; ?
-003e
+    <?php endif; ?>
     
 </div>
 
