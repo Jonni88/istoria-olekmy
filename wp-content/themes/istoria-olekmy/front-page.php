@@ -3,7 +3,7 @@
  * Template Name: Главная страница
  */
 
-get_header(); ?
+get_header(); ?>
 
 <!-- Hero Section -->
 <?php
@@ -50,7 +50,7 @@ $hero_style = file_exists($hero_image)
         while ($random_photo->have_posts()) : $random_photo->the_post();
     ?>
         <div class="photo-featured">
-            <?php if (has_post_thumbnail()) : ?
+            <?php if (has_post_thumbnail()) : ?>
                 <a href="<?php the_permalink(); ?>">
                     <?php the_post_thumbnail('large', ['style' => 'max-width: 100%; height: auto; border-radius: 8px;']); ?>
                 </a>
@@ -99,7 +99,7 @@ $hero_style = file_exists($hero_image)
             <?php while ($latest_issues->have_posts()) : $latest_issues->the_post(); ?>
                 
                 <article class="card">
-                    <?php if (has_post_thumbnail()) : ?
+                    <?php if (has_post_thumbnail()) : ?>
                         <?php the_post_thumbnail('medium', ['class' => 'card-image']); ?>
                     <?php endif; ?>
                     

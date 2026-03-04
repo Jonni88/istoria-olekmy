@@ -20,8 +20,7 @@ get_header(); ?>
                         <div class="card-meta">
                             <?php 
                             $event_date = get_field('event_date');
-                            if ($event_date) : ?
-003e
+                            if ($event_date) : ?>
                                 <span class="event-date">📅 <?php echo date('d.m.Y', strtotime($event_date)); ?></span>
                             <?php endif; ?>
                             

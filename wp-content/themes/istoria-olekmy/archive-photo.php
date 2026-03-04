@@ -17,7 +17,7 @@ get_header(); ?>
             <?php while (have_posts()) : the_post(); ?>
                 
                 <article class="card">
-                    <?php if (has_post_thumbnail()) : ?
+                    <?php if (has_post_thumbnail()) : ?>
                         <a href="<?php the_permalink(); ?>">
                             <?php the_post_thumbnail('medium', ['class' => 'card-image']); ?>
                         </a>

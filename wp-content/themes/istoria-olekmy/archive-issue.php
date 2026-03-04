@@ -29,7 +29,7 @@ get_header(); ?>
             <?php endif; ?>
                 
                 <article class="card">
-                    <?php if (has_post_thumbnail()) : ?
+                    <?php if (has_post_thumbnail()) : ?>
                         <?php the_post_thumbnail('medium', ['class' => 'card-image']); ?>
                     <?php endif; ?>
                     
