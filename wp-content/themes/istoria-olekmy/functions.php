@@ -50,3 +50,28 @@ require_once get_template_directory() . '/inc/template-functions.php';
 
 // Custom template tags
 require_once get_template_directory() . '/inc/template-tags.php';
+
+/**
+ * Get Russian month name in genitive case
+ * 
+ * @param int $month Month number (1-12)
+ * @return string Russian month name
+ */
+function russian_month($month) {
+    $months = [
+        1 => 'января',
+        2 => 'февраля',
+        3 => 'марта',
+        4 => 'апреля',
+        5 => 'мая',
+        6 => 'июня',
+        7 => 'июля',
+        8 => 'августа',
+        9 => 'сентября',
+        10 => 'октября',
+        11 => 'ноября',
+        12 => 'декабря',
+    ];
+    
+    return isset($months[$month]) ? $months[$month] : '';
+}
